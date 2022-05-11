@@ -2,6 +2,7 @@ import time
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+import logging
 
 #####LIST'S######
 hashh = []
@@ -9,35 +10,47 @@ timeing = []
 Amount_BTC = []
 Amount_USD = []
 
-while True:
-        url = requests.get('https://www.blockchain.com/btc/unconfirmed-transactions')
-        t_end = time.time() + 5 # do something for 5 seconds
-        while time.time() < t_end:
-            soup = BeautifulSoup(url.content, 'html.parser')
-            info0 = soup.select('div.sc-20ch6p-0')
-            for i in info0:
-                hashh.append(i.select('div.sc-6nt7oh-0')[0].text)                
-                timeing.append(i.select('div.sc-6nt7oh-0')[1].text)
-                Amount_BTC.append(i.select('div.sc-6nt7oh-0')[2].text)
-                Amount_USD.append(i.select('div.sc-6nt7oh-0')[3].text)        
-        print("New value added : ")
-        USDD = [s.lstrip("$") for s in Amount_USD]
-        df_hash = pd.DataFrame(hashh,
-                         columns = ['Hash'])
-                
-        df_timeing = pd.DataFrame(timeing,
-                         columns = ['Time'])
-                
-        df_Amount_BTC = pd.DataFrame(Amount_BTC,
-                         columns = ['BTC'])
-                
-        df_Amount_USD = pd.DataFrame(USDD,
-                         columns = ['USD'])
-                
-        result = pd.concat([df_timeing, df_hash,df_Amount_BTC, df_Amount_USD], axis=1)
-        
-        end = result.sort_values(by='USD', ascending=True)
-                                        
-        first_row_df = end.iloc[:1]
-        
-        print(first_row_df)
+logger = logging.getLogger()
+
+fhandler = logging.FileHandler(filename='cryptolog.log', mode='a')
+
+logger.addHandler(fhandler)
+
+
+try:
+    while True:
+            url = requests.get('https://www.blockchain.com/btc/unconfirmed-transactions')
+            t_end = time.time() + 5 # do something for 5 seconds
+            while time.time() < t_end:
+                soup = BeautifulSoup(url.content, 'html.parser')
+                info0 = soup.select('div.sc-20ch6p-0')
+                for i in info0:
+                    hashh.append(i.select('div.sc-6nt7oh-0')[0].text)                
+                    timeing.append(i.select('div.sc-6nt7oh-0')[1].text)
+                    Amount_BTC.append(i.select('div.sc-6nt7oh-0')[2].text)
+                    Amount_USD.append(i.select('div.sc-6nt7oh-0')[3].text)        
+            print("New value added : ")
+            USDD = [s.lstrip("$") for s in Amount_USD]
+            df_hash = pd.DataFrame(hashh,
+                             columns = ['Hash'])
+
+            df_timeing = pd.DataFrame(timeing,
+                             columns = ['Time'])
+
+            df_Amount_BTC = pd.DataFrame(Amount_BTC,
+                             columns = ['BTC'])
+
+            df_Amount_USD = pd.DataFrame(USDD,
+                             columns = ['USD'])
+
+            result = pd.concat([df_timeing, df_hash,df_Amount_BTC, df_Amount_USD], axis=1)
+
+            end = result.sort_values(by='USD', ascending=True)
+
+            first_row_df = end.iloc[:1]
+
+            print(first_row_df)
+
+            logging.warning(first_row_df)
+except:
+    print("Scraper closed")
