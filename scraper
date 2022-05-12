@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import logging
 
-#####LIST'S######
+
 hashh = []
 timeing = []
 Amount_BTC = []
@@ -20,7 +20,7 @@ logger.addHandler(fhandler)
 try:
     while True:
             url = requests.get('https://www.blockchain.com/btc/unconfirmed-transactions')
-            t_end = time.time() + 5 # do something for 5 seconds
+            t_end = time.time() + 60
             while time.time() < t_end:
                 soup = BeautifulSoup(url.content, 'html.parser')
                 info0 = soup.select('div.sc-20ch6p-0')
