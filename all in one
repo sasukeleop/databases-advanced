@@ -31,7 +31,7 @@ try:
                 r = requests.get(url)
 
                 data0 = BeautifulSoup(r.text, 'lxml')
-                data0 = web_hashes.find_all('div', {"class": 'sc-6nt7oh-0 PtIAf'})
+                data0 = data0.find_all('div', {"class": 'sc-6nt7oh-0 PtIAf'})
 
 
                 for a in data0:
