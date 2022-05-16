@@ -27,7 +27,7 @@ try:
     while True:
             url = ('https://www.blockchain.com/btc/unconfirmed-transactions')
 
-            t_end = time.time() + 5
+            t_end = time.time() + 60
             while time.time() < t_end:
                 r = requests.get(url)
 
