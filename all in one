@@ -3,9 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import logging
-from pymongo import MongoClient
-import json
-import redis
+import re
 
 
 hashh = []
@@ -22,32 +20,57 @@ logger.addHandler(fhandler)
 
 try:
     while True:
-            url = requests.get('https://www.blockchain.com/btc/unconfirmed-transactions')
-            t_end = time.time() + 60
-            r = redis.Redis(host='localhost', port=6379, db=0)
+            url = ('https://www.blockchain.com/btc/unconfirmed-transactions')
+
+            t_end = time.time() + 5
             while time.time() < t_end:
-                soup = BeautifulSoup(url.content, 'html.parser')
-                info0 = soup.select('div.sc-20ch6p-0')
-                for i in info0:
-                    hashh.append(i.select('div.sc-6nt7oh-0')[0].text)                
-                    timeing.append(i.select('div.sc-6nt7oh-0')[1].text)
-                    Amount_BTC.append(i.select('div.sc-6nt7oh-0')[2].text)
-                    Amount_USD.append(i.select('div.sc-6nt7oh-0')[3].text)        
+                r = requests.get(url)
+
+                web_hashes = BeautifulSoup(r.text, 'lxml')
+                web_hashes = web_hashes.find_all('div', {"class": 'sc-6nt7oh-0 PtIAf'})
+
+
+                for a in web_hashes:
+                    aHref = a.find_all('a',
+                                       {"class": "sc-1r996ns-0 fLwyDF sc-1tbyx6t-1 kCGMTY iklhnl-0 eEewhk d53qjk-0 ctEFcK"})
+                    bSpan = a.find_all('span', {"class": "sc-1ryi78w-0 cILyoi sc-16b9dsl-1 ZwupP u3ufsr-0 eQTRKC"})
+
+                    for b in aHref:
+                        text = b.get('href')
+                        replaced = re.sub('/btc/tx/', "", text)
+                        hashh.append(replaced)
+
+                    for c in bSpan:
+                        values = c.contents[0]
+
+                        a = "BTC"
+                        b = ":"
+                        c = "$"
+
+                        if a in values:
+                            Amount_BTC.append(values)
+                        elif b in values:
+                            timeing.append(values)
+                        elif c in values:
+                            Amount_USD.append(values)
+
+
+                        USDD = [s.lstrip("$") for s in Amount_USD]
+                        BTCC = [s.lstrip("BTC") for s in Amount_BTC]
+
+                        df_hash = pd.DataFrame(hashh,
+                                 columns = ['Hash'])
+
+                        df_timeing = pd.DataFrame(timeing,
+                                 columns = ['Time'])
+
+                        df_Amount_BTC = pd.DataFrame(BTCC,
+                                 columns = ['BTC'])
+
+                        df_Amount_USD = pd.DataFrame(USDD,
+                                 columns = ['USD'])
+             
             print("New value added : ")
-            r.flushdb()
-            print("removed old cache")
-            USDD = [s.lstrip("$") for s in Amount_USD]
-            df_hash = pd.DataFrame(hashh,
-                             columns = ['Hash'])
-
-            df_timeing = pd.DataFrame(timeing,
-                             columns = ['Time'])
-
-            df_Amount_BTC = pd.DataFrame(Amount_BTC,
-                             columns = ['BTC'])
-
-            df_Amount_USD = pd.DataFrame(USDD,
-                             columns = ['USD'])
 
             result = pd.concat([df_timeing, df_hash,df_Amount_BTC, df_Amount_USD], axis=1)
 
@@ -55,13 +78,15 @@ try:
 
             first_row_df = end.iloc[:1]
 
-            logging.warning(first_row_df)
             
+            print(first_row_df)
+
+            logging.warning(first_row_df)
             js = first_row_df.to_dict('dict')
-                        
-            r.set('bitcoin_data',json.dumps(js))
-            print("added to Redis")
         
+            redis_client = redis.Redis(host='localhost', port=6379, db=0)
+            redis_client.set('bitcoin_data',json.dumps(js))
+            print("added to Redis")
             client = MongoClient("mongodb://localhost:27017/")
         
             db = client['admin']
@@ -74,7 +99,6 @@ try:
             
         
             x = mycol.insert_one(d)
-
-
+            print("added to Mongo")
 except:
     print("Scraper closed")
