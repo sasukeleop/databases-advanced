@@ -26,11 +26,11 @@ try:
             while time.time() < t_end:
                 r = requests.get(url)
 
-                web_hashes = BeautifulSoup(r.text, 'lxml')
-                web_hashes = web_hashes.find_all('div', {"class": 'sc-6nt7oh-0 PtIAf'})
+                data0 = BeautifulSoup(r.text, 'lxml')
+                data0 = web_hashes.find_all('div', {"class": 'sc-6nt7oh-0 PtIAf'})
 
 
-                for a in web_hashes:
+                for a in data0:
                     aHref = a.find_all('a',
                                        {"class": "sc-1r996ns-0 fLwyDF sc-1tbyx6t-1 kCGMTY iklhnl-0 eEewhk d53qjk-0 ctEFcK"})
                     bSpan = a.find_all('span', {"class": "sc-1ryi78w-0 cILyoi sc-16b9dsl-1 ZwupP u3ufsr-0 eQTRKC"})
